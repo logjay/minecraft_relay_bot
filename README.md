@@ -18,11 +18,11 @@ or the RCON port + server logs as a file.
 If you aren't familiar with hosting a Discord bot, it will need to run continuously on your own computer or a host server. Either your computer or the host server is what will need access to the minecraft server.
 
 ## Setup
-- Run **init_config.py** (first time only)
+1. Run **init_config.py** (first time only)
 This will generate the config .json files you will need to configure.
-- Setup the config files with your basics
+2. Setup the config files with your basics
 See **Configuration** section for details
-- Run **start_bot.py** (this will start the bot)
+3. Run **start_bot.py** (this will start the bot)
 
 ## Configuration
 The following config files are found in the new config folder created by the **init_config.py** script - by default found in the top of the bot directory and called 'configs'.
@@ -60,8 +60,11 @@ To enable all in-game log prints on that channel or change other settings, you'l
     "print_log": false
 }}
 ```
-
-
+| Rule | Description | type |
+| ------: | :----------- | ----------- |
+| allow_commands | allow bot commands in channel |bool|
+| print_log | print ALL server messages to channel |bool|
+| printRCON | print #say commands back to the channel |bool|
 
 
 - **mc_config.json**
