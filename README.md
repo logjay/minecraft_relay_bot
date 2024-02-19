@@ -48,8 +48,8 @@ Here is a breakdown of the admin_roles dictionary:
 | admin_level | currently only '1' is supported | 1 |
 
 - **discord_channels.json**
-This will self-populate as needed. After assigning a role ID as admin, type '*#addbot*' as a user with the admin role to allow the bot into the channel.
-By default, the command will enable bot commands to be triggered from that channel.
+This will self-populate as needed. After assigning a role ID as admin, type '*#addbot*' as a user with the admin role to allow the bot into the channel.  
+By default, the command will enable bot commands to be triggered from that channel.  
 To enable all in-game log prints on that channel or change other settings, you'll also need to run #rule command
 
 ```
@@ -103,9 +103,9 @@ For minecraft server related settings
 | RCON_PWD | password for rcon connection |"mypassword"|
 | RCON_PORT | port for rcon connection |"127.0.0.1"|
 
-USRNAME_DICT will be auto-populated by the #addusername command.
-RCON_DICT will be auto-populated from the server.properties if you supply it.
-SERVER_IP_ADDR is just for bot print, the bot will not connect this way.
+USRNAME_DICT will be auto-populated by the #addusername command.  
+RCON_DICT will be auto-populated from the server.properties if you supply it.  
+SERVER_IP_ADDR is just for bot print, the bot will not connect this way.  
 
 ## FAQ
 - **Can I use my existing Discord bot?**
