@@ -1,3 +1,6 @@
+"""
+Written by Logan Williams January 2024
+"""
 import os
 import random
 import discord
@@ -9,9 +12,11 @@ import init_config
 from discord.ext import tasks
 
 
-bot_rules = [
-    'printRCON',
-]
+# bot_rules = [
+#     'printRCON',
+#     'print_log',
+#     'allow_commands'
+# ]
 
 
 class RelayBot():
@@ -27,26 +32,31 @@ class RelayBot():
         self.disc_bot = discord_util.DiscordBotMgr(
             config_dict = discord_config_dict,
             config_info = config_info
-            # config_folder = os.path.join(config_folder,'discord')
         )
+
+        addtl_bot_default_rules = {"printRCON": True,
+                                   "print_log": False}
+
+        for rule in addtl_bot_default_rules: # add more non-generic rules to the discord class
+            self.disc_bot.default_ch_params[rule] = addtl_bot_default_rules[rule]
+        self.disc_bot._get_supported_channels()
 
         self.disc_bot.cmd_trigger = "#"
         self.disc_bot.commands_list = [
-            discord_util.BotCommand("help", self.print_help,            description = 'for this message'),
-            discord_util.BotCommand("log", self.log_cmd,                description = 'for recent messages not seen yet by server'),
-            discord_util.BotCommand("list", self.list_cmd,              description = 'for current player list'),
-            discord_util.BotCommand("ip", self.ip_cmd,                  description = 'show IP address for server'),
-            discord_util.BotCommand("say", self.say_cmd,                description = 'to send message to the server. (or reply to one of the game messages)'),
-            discord_util.BotCommand("admin", self.print_help_admin_cmd, description = 'for admin cmd list'),
-            discord_util.BotCommand("op", self.op_cmd,                  description = 'make user an admin', admin_level=1),
-            discord_util.BotCommand("rule", self.rule_cmd,              description = '[rulename] to change bot rule, or print all rules', admin_level=1),
-            discord_util.BotCommand("addbot", self.add_channel,         description = 'adds bot to the relevant channel', admin_level=1),
-
+            discord_util.BotCommand("help", self.print_help,                    description = 'for this message'),
+            discord_util.BotCommand("log", self.log_cmd,                        description = 'for recent messages not seen yet by server'),
+            discord_util.BotCommand("list", self.list_cmd,                      description = 'for current player list'),
+            discord_util.BotCommand("ip", self.ip_cmd,                          description = 'show IP address for server'),
+            discord_util.BotCommand("say", self.say_cmd,                        description = 'to send message to the server. (or reply to one of the game messages)'),
+            discord_util.BotCommand("admin", self.print_help_admin_cmd,         description = 'for admin cmd list'),
+            discord_util.BotCommand("op", self.op_cmd,                          description = 'make user an admin', admin_level=1),
+            discord_util.BotCommand("rule", self.rule_cmd,                      description = '[rulename] to change bot rule, or print all rules', admin_level=1),
+            discord_util.BotCommand("addbot", self.add_channel,                 description = 'adds bot to the relevant channel', admin_level=1),
+            discord_util.BotCommand("addusername", self.add_username_to_dict,   description = '[MCUsername] [@DiscordName] associates MC name with Discord name', admin_level=1),
         ]
 
         self.mc_bot = mc_server_manager.MCServerManager(
             config_dict = minecraft_config_dict,
-            # config_folder = os.path.join(config_folder,'mc_server'),
             config_info = config_info,
             server_dir = minecraft_server_dir
         )
@@ -67,6 +77,8 @@ class RelayBot():
         for channelID in self.disc_bot.log_chs():
             channel = self.disc_bot.client.get_channel(channelID)
             for line in update_lines:
+                if '[Relay]' in line and not self.disc_bot.channels_dict[str(channel.id)]['printRCON']:
+                    continue # don't print
                 await channel.send(line)
         if len(update_lines) > 0:
             self.pollforupdates.change_interval(seconds=self.reset_interval())
@@ -108,6 +120,17 @@ class RelayBot():
     async def on_ready(self):
         print(f'We have logged in as {self.disc_bot.client.user}', flush=True)
         self.pollforupdates.start()    
+
+    async def add_username_to_dict(self, message:discord.Message):
+        split_msg = message.content.split()
+        if len(split_msg) != 3 or split_msg[0] != '#addusername':
+            await message.channel.send(f"Syntax is #addusername [MCUsername] [@DiscordName]")
+            return 
+        for member in self.disc_bot.client.get_all_members():
+            if member.mention == split_msg[2] and message.guild == member.guild:
+                self.mc_bot.username_dict[split_msg[1]] = ['@'+ member.name, member.id]
+                self.mc_bot.set_dict(self.mc_bot.username_dict_key, self.mc_bot.username_dict)
+                return 
 
     async def add_channel(self, message:discord.Message):
         if message.channel.id not in self.disc_bot.cmd_chs():
@@ -151,6 +174,16 @@ class RelayBot():
         pass
 
     async def rule_cmd(self, message:discord.Message):
+        split_msg = message.content.split()
+        ch_rules = self.disc_bot.channels_dict[str(message.channel.id)]
+
+        if len(split_msg) == 1:
+            await message.channel.send(ch_rules)
+        elif len(split_msg) == 3 and split_msg[1] in self.disc_bot.default_ch_params.keys():
+            # ch_rules[split_msg[1]] = (split_msg[2].lower() in ["1", "true", "yes"])
+            self.disc_bot.channels_dict[str(message.channel.id)][split_msg[1]] = (split_msg[2].lower() in ["1", "true", "yes"])
+            self.disc_bot._write_supported_channels()
+            await message.channel.send(f"Channel rule {split_msg[1]} set to {self.disc_bot.channels_dict[str(message.channel.id)][split_msg[1]]}")
         pass
 
     async def list_cmd(self, message:discord.Message):

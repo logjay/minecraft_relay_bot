@@ -49,14 +49,17 @@ class ConfigInfo():
             {
             "1000000000000000101": {
                 "allow_commands": True,
+                "printRCON": True,
                 "print_log": False
             },
             "1000000000000000102": {
                 "allow_commands": True,
+                "printRCON": True,
                 "print_log": True
             },
             "1000000000000000201": {
                 "allow_commands": True,
+                "printRCON": False,
                 "print_log": True
             },
             }

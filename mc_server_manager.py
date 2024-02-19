@@ -69,17 +69,13 @@ class MCServerManager():
     """
 
     CurrentPlayersList = []
-
-    update_freq_idx = 0
-
     server_rcon = MinecraftRCON
+
+    username_dict_key = 'USRNAME_DICT'
 
     def __init__(self, config_dict, server_dir, config_info:ConfigInfo):
 
         self.config_dict = config_dict
-        # self.config_folder = config_folder
-
-        # self.config_dict_file = os.path.join(self.config_folder,'mc_config.json')
         self.config_dict_file = config_info.MC_CONFIG_PATH()
 
         if self.config_dict is None:
@@ -96,11 +92,9 @@ class MCServerManager():
         self.server_rcon = MinecraftRCON(self.config_dict['RCON_DICT'])
         
         self.server_ip       = self.config_dict['SERVER_IP_ADDR']
-        
-        self.username_dict   = self.config_dict['USRNAME_DICT']
+        self.username_dict   = self.config_dict[self.username_dict_key]
 
         self.latest_log = self.read_latest_log()
-
 
     def set_dict(self, key, param):
         try:

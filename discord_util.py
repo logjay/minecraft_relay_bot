@@ -26,7 +26,6 @@ class DiscordBotMgr():
     admin_role_dict = {}
     
     default_ch_params = {
-        "print_log": False,
         "allow_commands": True
     }
 
@@ -34,11 +33,6 @@ class DiscordBotMgr():
     def __init__(self, config_dict, config_info:ConfigInfo):
 
         self.config_dict = config_dict
-        # self.config_folder = config_folder
-
-        # self.config_dict_file    = os.path.join(self.config_folder,'discord_config.json')
-        # self.channel_config_file = os.path.join(self.config_folder,'discord_channels.json')
-        # self.admins_json         = os.path.join(self.config_folder,'admin_roles.json')
         self.config_dict_file = config_info.DISCORD_CONFIG_PATH()
         self.channel_config_file = config_info.DISCORD_CHANNELS_PATH()
         self.admins_json = config_info.ADMIN_ROLES_PATH()
@@ -50,7 +44,8 @@ class DiscordBotMgr():
 
         self.intents = discord.Intents.default()
         self.intents.message_content = True
-        self.client = discord.Client(intents=self.intents)
+        self.intents.members = True
+        self.client:discord.Client = discord.Client(intents=self.intents)
 
         self.cmd_trigger = '!'
         self.commands_list = [BotCommand('null', None)]
@@ -124,6 +119,15 @@ class DiscordBotMgr():
         
     def _get_supported_channels(self):
         self.channels_dict = get_dict(self.channel_config_file)
+        updated = False
+        for ch in self.channels_dict:
+            for dflt_rule in self.default_ch_params:
+                if dflt_rule not in self.channels_dict[ch]:
+                    updated = True
+                    self.channels_dict[ch][dflt_rule] = self.default_ch_params[dflt_rule]
+
+        if updated:
+            self._write_supported_channels()
 
     async def command_handler(self, message:discord.Message):
         """uses command_dict of parent functions to react to messages"""
