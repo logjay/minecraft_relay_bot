@@ -3,7 +3,8 @@ import os, sys, getopt
 import relaybot
 import init_config
 
-def parse_args(argv):
+
+def parse_args(argv) -> dict:
     arg_dict = {
         "config_folder" : None,
         "minecraft_folder": None
@@ -28,7 +29,6 @@ def parse_args(argv):
 
     return arg_dict
 
-   
 # load dictionaries and values from config files
 CONFIG_FOLDER = os.path.join(os.path.dirname(__file__), 'configs')
 MINECRAFT_FOLDER = None
@@ -52,6 +52,3 @@ bot = relaybot.RelayBot(discord_config_dict = None,
                         poll_frequencies = UPDATE_FREQS)
 
 bot.run()
-
-#TODO, allow to call this file w/ cmd arguments
-#TODO create init function/class that fills out dummy variables, etc for the config files (+ creates directories)

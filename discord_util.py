@@ -1,12 +1,17 @@
 import os
 import inspect
+
+from typing import List
+
 import discord
 
 from load_config import *
 from init_config import *
 
 class BotCommand():
-
+    """
+    Commmand structure
+    """
     def __init__(self,
                  cmd_name:str,
                  funct,
@@ -19,8 +24,23 @@ class BotCommand():
         self.funct = funct
         self.description = description
 
-class DiscordBotMgr():
+    async def execute(self, **args):
+        if self.funct is None:
+            print(f"No command function specified for {self.cmd_name}", flush=True)
+            return False
+        elif inspect.iscoroutinefunction(self.funct):
+            await self.funct(**args) #executes cmd function
+            return True
+        else:
+            self.funct(**args)
+            return True
+        
 
+class DiscordBotMgr():
+    """
+    General discord bot manager with support for 
+    messages, commands, channel rules, admins, and non-volatile configuration
+    """
     channels_dict = {}
 
     admin_role_dict = {}
@@ -28,7 +48,6 @@ class DiscordBotMgr():
     default_ch_params = {
         "allow_commands": True
     }
-
 
     def __init__(self, config_dict, config_info:ConfigInfo):
 
@@ -48,7 +67,7 @@ class DiscordBotMgr():
         self.client:discord.Client = discord.Client(intents=self.intents)
 
         self.cmd_trigger = '!'
-        self.commands_list = [BotCommand('null', None)]
+        self.commands_list:List[BotCommand] = []
 
         self._get_admin_dict()
         self._get_supported_channels()
@@ -64,13 +83,13 @@ class DiscordBotMgr():
     def save_config_dict(self):
         write_dict(self.config_dict,self.config_dict_file)
 
-    def all_chs(self):
+    def all_chs(self) -> List[int]:
         return [int(ch) for ch in self.channels_dict.keys()]
 
-    def log_chs(self):
+    def log_chs(self) -> List[int]:
         return [ch for ch in self.all_chs() if self.channels_dict[str(ch)]['print_log']]
     
-    def cmd_chs(self):
+    def cmd_chs(self) -> List[int]:
         return [ch for ch in self.all_chs() if self.channels_dict[str(ch)]['allow_commands']]
 
     def add_supported_channel(self, channel_id, ch_params=None):
@@ -90,7 +109,7 @@ class DiscordBotMgr():
         self._get_supported_channels()
 
 
-    def is_admin(self, user:discord.User, req_level = 1):        
+    def is_admin(self, user:discord.User, req_level = 1) -> bool:        
         if req_level <= 0:
             return True # skip some looping
         
@@ -119,17 +138,18 @@ class DiscordBotMgr():
         
     def _get_supported_channels(self):
         self.channels_dict = get_dict(self.channel_config_file)
+
+        # in case of new rule type added, add that rule to each config file as default
         updated = False
         for ch in self.channels_dict:
             for dflt_rule in self.default_ch_params:
                 if dflt_rule not in self.channels_dict[ch]:
                     updated = True
                     self.channels_dict[ch][dflt_rule] = self.default_ch_params[dflt_rule]
-
         if updated:
             self._write_supported_channels()
 
-    async def command_handler(self, message:discord.Message):
+    async def command_handler(self, message:discord.Message) -> bool:
         """uses command_dict of parent functions to react to messages"""
         if message.clean_content.lower().startswith(self.cmd_trigger):
             for i, cmd_name in enumerate([cmd.cmd_name for cmd in self.commands_list]):

@@ -5,6 +5,7 @@ from rcon.source import Client
 from init_config import *
 from load_config import *
 
+
 leave_join_msgs = ["lost connection",
                     "left the game",
                     "joined the game"]
@@ -15,6 +16,9 @@ port_default = 25575
 
 
 class MinecraftRCON():
+    """
+    Connection manager for direct port to an RCON server.
+    """
     def __init__(self, ip = None, pwd = None, port=None):
         self.ip = ip
         self.pwd = pwd
@@ -147,14 +151,7 @@ class MCServerManager():
         return new_lines
     
     def get_player_list(self):
-        activePlayers = self.server_rcon.getActivePlayers()
-        # if activePlayers is None:
-        #     return None
-        # else:
-        self.CurrentPlayersList = activePlayers
-        # for player in self.CurrentPlayersList:
-        #     if player == '':
-        #         self.CurrentPlayersList.remove(player)
+        self.CurrentPlayersList = self.server_rcon.getActivePlayers()
         return self.CurrentPlayersList
     
     def parse_server_message(self, line = ""):

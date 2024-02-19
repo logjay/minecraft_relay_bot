@@ -3,24 +3,20 @@ Written by Logan Williams January 2024
 """
 import os
 import random
+from typing import List
+
 import discord
+from discord.ext import tasks
 
 import mc_server_manager
 import discord_util
 import init_config
 
-from discord.ext import tasks
-
-
-# bot_rules = [
-#     'printRCON',
-#     'print_log',
-#     'allow_commands'
-# ]
-
 
 class RelayBot():
-
+    """
+    Managing class for RelayBot, bridging DiscordBotMgr and MCServerManager and managing all bot-specifics
+    """
     def __init__(self,
                  discord_config_dict:dict,
                  minecraft_config_dict:dict,
@@ -100,7 +96,7 @@ class RelayBot():
             return 
         self.pollforupdates.change_interval(seconds=5)
     
-    def check_server_updates(self, requested = False) -> list:
+    def check_server_updates(self, requested = False) -> List[str]:
         new_lines = self.mc_bot.check_log_updates()
         return_strings = []
         if new_lines == []:
@@ -213,12 +209,12 @@ class RelayBot():
             await message.channel.send("Don't @ me please :'( it hurts my feelings.")
 
 
-    def shift_interval(self) -> int :
+    def shift_interval(self) -> int:
         if self.curr_freq_idx > 0:
             self.curr_freq_idx -= 1
         return self.get_freq()
 
-    def reset_interval(self) -> int :
+    def reset_interval(self) -> int:
         self.curr_freq_idx = len(self.poll_frequencies) - 1
         return self.get_freq()
     

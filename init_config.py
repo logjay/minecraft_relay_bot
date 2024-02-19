@@ -109,7 +109,6 @@ class ConfigInfo():
         load_config.write_dict(minecraft_config_dict, self.MC_CONFIG_PATH())
 
 
-
 if __name__ == '__main__':
     config_directory = None
     gen_dir = True
@@ -133,13 +132,11 @@ if __name__ == '__main__':
                 if confirm.lower() != 'yes':
                     gen_dir = False
 
-
-    if config_directory is None:
-        config_directory = os.path.join(os.path.dirname(__file__), 'configs')
-
-    print (f'Config directory to be created @ {config_directory}', flush=True)
-
-    config_inst = ConfigInfo(config_directory)
-
     if gen_dir:
+        if config_directory is None:
+            config_directory = os.path.join(os.path.dirname(__file__), 'configs')
+
+        print (f'Config directory to be created @ {config_directory}', flush=True)
+
+        config_inst = ConfigInfo(config_directory)
         config_inst.gen_template_config()
