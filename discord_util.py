@@ -16,13 +16,15 @@ class BotCommand():
                  cmd_name:str,
                  funct,
                  admin_level:int = 0,
-                 description = ''
+                 description = '',
+                 syntax = '',
                  ):
         
         self.cmd_name = cmd_name
         self.admin_level = admin_level
         self.funct = funct
         self.description = description
+        self.syntax = syntax
 
     async def execute(self, **args):
         if self.funct is None:
@@ -108,6 +110,12 @@ class DiscordBotMgr():
         self._write_supported_channels()
         self._get_supported_channels()
 
+    def add_admin_role(self, server, admin_id, admin_level=1):
+        if str(server) not in self.admin_role_dict:
+            self.admin_role_dict[str(server)] = {}
+        self.admin_role_dict[str(server)][str(admin_id)] = {"admin_level":int(admin_level)}
+
+        self._write_new_admin_dict()
 
     def is_admin(self, user:discord.User, req_level = 1) -> bool:        
         if req_level <= 0:
@@ -127,8 +135,8 @@ class DiscordBotMgr():
             return True
         return False
     
-    def _write_new_admin_dict(self, new_dict):
-        write_dict(new_dict, self.admins_json)
+    def _write_new_admin_dict(self):
+        write_dict(self.admin_role_dict, self.admins_json)
 
     def _get_admin_dict(self):
         self.admin_role_dict = get_dict(self.admins_json)

@@ -32,6 +32,10 @@ class RelayBot():
 
         addtl_bot_default_rules = {"printRCON": True,
                                    "print_log": False}
+        
+        self.editable_server_props = {"motd":str, 
+                                 "pvp":bool, 
+                                 "difficulty":str}
 
         for rule in addtl_bot_default_rules: # add more non-generic rules to the discord class
             self.disc_bot.default_ch_params[rule] = addtl_bot_default_rules[rule]
@@ -49,6 +53,8 @@ class RelayBot():
             discord_util.BotCommand("rule", self.rule_cmd,                      description = '[rulename] to change bot rule, or print all rules', admin_level=1),
             discord_util.BotCommand("addbot", self.add_channel,                 description = 'adds bot to the relevant channel', admin_level=1),
             discord_util.BotCommand("addusername", self.add_username_to_dict,   description = '[MCUsername] [@DiscordName] associates MC name with Discord name', admin_level=1),
+            discord_util.BotCommand("server_prop", self.server_prop_cmd,        description = 'changes server settings', admin_level=1),
+            discord_util.BotCommand("makeadmin", self.make_admin_cmd,          description = '[roleID][admin_level] makes a role into bot admin', admin_level=1),    
         ]
 
         self.mc_bot = mc_server_manager.MCServerManager(
@@ -175,12 +181,57 @@ class RelayBot():
 
         if len(split_msg) == 1:
             await message.channel.send(ch_rules)
+            return 
         elif len(split_msg) == 3 and split_msg[1] in self.disc_bot.default_ch_params.keys():
             # ch_rules[split_msg[1]] = (split_msg[2].lower() in ["1", "true", "yes"])
             self.disc_bot.channels_dict[str(message.channel.id)][split_msg[1]] = (split_msg[2].lower() in ["1", "true", "yes"])
             self.disc_bot._write_supported_channels()
             await message.channel.send(f"Channel rule {split_msg[1]} set to {self.disc_bot.channels_dict[str(message.channel.id)][split_msg[1]]}")
-        pass
+
+    async def server_prop_cmd(self, message:discord.Message): 
+        split_msg = message.content.split()
+        if len(split_msg) == 1:
+            prop_message = f"These are the available properties to change: \n"
+            for prop in self.editable_server_props:
+                prop_message += f"\t{prop} : {self.editable_server_props[prop].__name__}\n"
+            await message.channel.send(prop_message)
+            return 
+        elif len(split_msg) >= 3 and split_msg[1] in self.editable_server_props.keys():
+            try:
+                if self.editable_server_props[split_msg[1]] == str:
+                    new_param = message.content.removeprefix(f"{split_msg[0]} {split_msg[1]} ")
+                else: 
+                    new_param = self.editable_server_props[split_msg[1]](split_msg[2])
+            except:
+                await message.channel.send(f"Setting {split_msg[1]} must be of type {self.editable_server_props[split_msg[1]]}")
+
+            self.mc_bot.server_props[split_msg[1]] = str(new_param)
+            self.mc_bot.set_server_properties()
+
+            await message.channel.send(f"Setting {split_msg[1]} to {split_msg[2]}")
+
+    async def make_admin_cmd(self, message:discord.Message):
+        split_msg = message.content.split()
+        if len(split_msg) == 1:
+            await message.channel.send(f"Syntax is #makeadmin [role ID #] [admin level]")
+            return 
+        elif len(split_msg) == 3:
+            roleID = str(split_msg[1])
+            admin_level = split_msg[2]
+            server = str(message.guild.id)
+
+            # if server in self.disc_bot.admin_role_dict:
+                # if str(roleID) in self.disc_bot.admin_role_dict[server]:
+            
+                # sender must be a level ABOVE to change level of role
+            if not self.disc_bot.is_admin(message.author, int(admin_level) + 1): 
+                # await message.channel.send(f"Must be higher level than {self.disc_bot.client.get_guild(int(roleID)).id} to change")
+                await message.channel.send(f"Must be higher level than {admin_level} to change")
+                return 
+                    
+            
+            self.disc_bot.add_admin_role(server, roleID, admin_level)
+            await message.channel.send(f"Made {roleID} admin level {admin_level}")
 
     async def list_cmd(self, message:discord.Message):
         self.mc_bot.get_player_list()

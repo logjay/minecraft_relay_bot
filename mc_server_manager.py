@@ -90,6 +90,8 @@ class MCServerManager():
         else: 
             self.server_dir = server_dir
 
+        self.get_server_properties()
+
         if self.config_dict['RCON_DICT'] is None:
             self.get_RCON_settings()
             
@@ -116,28 +118,53 @@ class MCServerManager():
             log = f.readlines()
         return log
     
-    def get_RCON_settings(self):
+    def get_server_properties(self):
         with open(os.path.join(self.server_dir, "server.properties"), "r") as f:
             settings_lines = f.readlines()
-
         properties_dict = {}
         for line in settings_lines:
             line = line.split('\n')[0]
             if '=' in line:
                 prop = line.removeprefix(line.split('=')[0] + '=')
-                if prop == '':
-                    prop = None
+                # if prop == '':
+                #     prop = None
                 properties_dict[line.split('=')[0]] = prop
-                
-            pass
 
         self.server_props = properties_dict
+        return self.server_props
+
+    def get_RCON_settings(self):
+        # self.get_server_properties()
 
         self.config_dict['RCON_DICT'] = {}
 
         self.config_dict['RCON_DICT']['RCON_IP'] = self.server_props['server-ip']
         self.config_dict['RCON_DICT']['RCON_PWD'] = self.server_props['rcon.password']
         self.config_dict['RCON_DICT']['RCON_PORT'] = int(self.server_props['rcon.port'])
+
+    def set_server_properties(self):
+        with open(os.path.join(self.server_dir, "server.properties"), "r") as f:
+            settings_lines = f.readlines()
+
+        updated = False
+        for i, line in enumerate(settings_lines):
+            param = line.split('\n')[0]
+            if '=' in param:
+                param = line.split('=')[0]
+                if param in self.server_props:
+                    existing = line.removeprefix(line.split('=')[0] + '=')
+                    # if self.server_props[param] is None:
+                    #     new_param =
+                    new_param = self.server_props[param] + '\n'
+                    if existing != new_param:
+                        settings_lines[i] = line.replace(existing, new_param)
+                        updated = True
+            # settings_lines[i] = line
+        if updated:
+            with open(os.path.join(self.server_dir, "server.properties"), "w") as f:
+                f.writelines(settings_lines)
+
+            self.server_rcon.sendServerCommand("/reload")
 
     def check_log_updates(self):
         new_lines = []
