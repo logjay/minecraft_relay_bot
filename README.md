@@ -1,4 +1,4 @@
-# CapitalismBot - Minecraft x Discord bot
+# RelayBot - Minecraft x Discord bot
 A Discord bot that relays messages to/from a Minecraft server.
 
 ## Major features
